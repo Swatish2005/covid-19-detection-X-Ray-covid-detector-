@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COVID-19 Detection from Chest X-Ray</title>
+    <style>
+        :root {
+            --primary: #3498db;
+            --secondary: #2980b9;
+            --danger: #e74c3c;
+            --success: #2ecc71;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --gray: #95a5a6;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        header {
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo img {
+            height: 40px;
+            margin-right: 10px;
+        }
+        
+        .logo h1 {
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+        
+        nav ul li {
+            margin-left: 2rem;
+        }
+        
+        nav ul li a {
+            text-decoration: none;
+            color: var(--dark);
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        
+        nav ul li a:hover {
+            color: var(--primary);
+        }
+        
+        .hero {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 4rem 0;
+            text-align: center;
+        }
+        
+        .hero h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto 2rem;
+        }
+        
+        .btn {
+            display: inline-block;
+            background-color: white;
+            color: var(--primary);
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--secondary);
+        }
+        
+        .main {
+            padding: 4rem 0;
+        }
+        
+        .section-title {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .section-title h2 {
+            font-size: 2rem;
+            color: var(--dark);
+            margin-bottom: 1rem;
+        }
+        
+        .section-title p {
+            color: var(--gray);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        .upload-area {
+            background-color: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        
+        .upload-container {
+            border: 2px dashed var(--gray);
+            border-radius: 8px;
+            padding: 3rem 2rem;
+            margin-bottom: 2rem;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .upload-container:hover {
+            border-color: var(--primary);
+        }
+        
+        .upload-container.drag-over {
+            border-color: var(--primary);
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+        
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--gray);
+            margin-bottom: 1rem;
+        }
+        
+        .upload-text {
+            margin-bottom: 1rem;
+        }
+        
+        .upload-text h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .upload-text p {
+            color: var(--gray);
+        }
+        
+        #file-input {
+            display: none;
+        }
+        
+        .preview-area {
+            display: none;
+            margin-top: 2rem;
+        }
+        
+        .preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .image-preview {
+            width: 300px;
+            height: 300px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        
+        .image-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .result-container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        
+        .result-positive {
+            border-left: 5px solid var(--danger);
+        }
+        
+        .result-negative {
+            border-left: 5px solid var(--success);
+        }
+        
+        .result-uncertain {
+            border-left: 5px solid var(--gray);
+        }
+        
+        .result-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .result-probability {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+        
+        .positive {
+            color: var(--danger);
+        }
+        
+        .negative {
+            color: var(--success);
+        }
+        
+        .result-description {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+        
+        .result-actions {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+        
+        .feature-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            text-align: center;
+            transition: transform 0.3s;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-10px);
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+        }
+        
+        .feature-card h3 {
+            margin-bottom: 1rem;
+        }
+        
+        .feature-card p {
+            color: var(--gray);
+        }
+        
+        footer {
+            background-color: var(--dark);
+            color: white;
+            padding: 3rem 0 1rem;
+        }
+        
+        .contact-form {
+            max-width: 500px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .contact-form input,
+        .contact-form textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .contact-form textarea {
+            height: 120px;
+            resize: vertical;
+        }
+        
+        .copyright {
+            text-align: center;
+            padding-top: 2rem;
+            margin-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--light);
+            font-size: 0.9rem;
+        }
+
+        /* Additional styles for about section */
+        .feature-card ul {
+            text-align: left;
+            padding-left: 20px;
+            color: var(--gray);
+            margin-top: 1rem;
+        }
+
+        .feature-card ul li {
+            margin-bottom: 0.5rem;
+        }
+
+        .resources-container {
+            margin-top: 3rem;
+            text-align: center;
+        }
+
+        .resource-links {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 1.5rem;
+        }
+
+        .resource-links a {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: var(--primary);
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        .resource-links a:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+
+        .resource-links img {
+            margin-right: 8px;
+        }
+
+        .emergency-info {
+            margin-top: 2rem;
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .emergency-info h4 {
+            margin-bottom: 10px;
+        }
+
+        .emergency-info ul {
+            text-align: left;
+            display: inline-block;
+            margin: 0 auto;
+        }
+
+        /* Graph styles */
+        .result-graph {
+            width: 100%;
+            height: 300px;
+            margin: 2rem 0;
+            position: relative;
+        }
+
+        .graph-bars {
+            display: flex;
+            height: 200px;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 40px;
+            padding: 0 20px;
+        }
+
+        .graph-bar-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 60px;
+        }
+
+        .graph-bar {
+            width: 40px;
+            background: linear-gradient(to top, var(--primary), var(--secondary));
+            border-radius: 5px 5px 0 0;
+            transition: height 1s ease-out;
+            position: relative;
+        }
+
+        .graph-bar.positive {
+            background: linear-gradient(to top, var(--danger), #c0392b);
+        }
+
+        .graph-bar.negative {
+            background: linear-gradient(to top, var(--success), #27ae60);
+        }
+
+        .graph-label {
+            margin-top: 10px;
+            font-weight: bold;
+            color: var(--dark);
+        }
+
+        .graph-value {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--dark);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .graph-value:after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 5px 5px 0;
+            border-style: solid;
+            border-color: var(--dark) transparent transparent;
+        }
+
+        .graph-legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 3px;
+        }
+
+        .legend-color.positive {
+            background-color: var(--danger);
+        }
+
+        .legend-color.negative {
+            background-color: var(--success);
+        }
+
+        .confidence-meter {
+            width: 100%;
+            height: 20px;
+            background-color: #ecf0f1;
+            border-radius: 10px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+
+        .confidence-level {
+            height: 100%;
+            border-radius: 10px;
+            background: linear-gradient(to right, var(--success), var(--danger));
+            transition: width 1s ease-out;
+        }
+
+        .confidence-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+            font-size: 0.8rem;
+            color: var(--gray);
+        }
+        
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+            }
+            
+            nav ul {
+                margin-top: 1rem;
+            }
+            
+            nav ul li {
+                margin-left: 1rem;
+                margin-right: 1rem;
+            }
+            
+            .hero h2 {
+                font-size: 2rem;
+            }
+            
+            .hero p {
+                font-size: 1rem;
+            }
+
+            .features {
+                grid-template-columns: 1fr;
+            }
+
+            .resource-links {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .graph-bars {
+                gap: 20px;
+            }
+
+            .graph-bar-container {
+                width: 40px;
+            }
+
+            .graph-bar {
+                width: 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <img src="https://img.icons8.com/color/48/000000/coronavirus.png" alt="COVID-19 Logo">
+                    <h1>COVID-19 X-Ray Detection</h1>
+                </div>
+                <nav>
+                    <ul>
+                        <li><a href="#home">Home</a></li>
+                        <li><a href="#detect">Detect</a></li>
+                        <li><a href="#about">About</a></li>
+                        <li><a href="#contact">Contact</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero" id="home">
+        <div class="container">
+            <h2>Early COVID-19 Detection from Chest X-Ray Images</h2>
+            <p>Our advanced AI model analyzes chest X-ray images to detect potential COVID-19 infections with high accuracy. Get instant results to help with early diagnosis and treatment.</p>
+            <a href="#detect" class="btn btn-primary">Try It Now</a>
+        </div>
+    </section>
+
+    <section class="main" id="detect">
+        <div class="container">
+            <div class="section-title">
+                <h2>COVID-19 Detection</h2>
+                <p>Upload a chest X-ray image (JPEG or PNG format) and our AI will analyze it for signs of COVID-19 infection.</p>
+            </div>
+            
+            <div class="upload-area">
+                <div class="upload-container" id="upload-container">
+                    <div class="upload-icon">
+                        <img src="https://img.icons8.com/pastel-glyph/64/000000/upload--v1.png" alt="Upload Icon">
+                    </div>
+                    <div class="upload-text">
+                        <h3>Upload Chest X-Ray Image</h3>
+                        <p>Drag & drop your image here or click to browse</p>
+                    </div>
+                    <input type="file" id="file-input" accept="image/jpeg, image/png">
+                    <button class="btn">Select Image</button>
+                </div>
+                
+                <div class="preview-area" id="preview-area">
+                    <h3>Image Preview</h3>
+                    <div class="preview-container">
+                        <div class="image-preview">
+                            <img id="preview-image" src="" alt="Preview">
+                        </div>
+                    </div>
+                    <button id="analyze-btn" class="btn btn-primary">Analyze Image</button>
+                </div>
+                
+                <div class="result-container" id="result-container" style="display: none;">
+                    <h2 class="result-title" id="result-title">Analysis Result</h2>
+                    
+                    <div class="result-graph">
+                        <div class="graph-bars">
+                            <div class="graph-bar-container">
+                                <div class="graph-bar negative" id="negative-bar" style="height: 0%;">
+                                    <span class="graph-value" id="negative-value">0%</span>
+                                </div>
+                                <div class="graph-label">Negative</div>
+                            </div>
+                            <div class="graph-bar-container">
+                                <div class="graph-bar positive" id="positive-bar" style="height: 0%;">
+                                    <span class="graph-value" id="positive-value">0%</span>
+                                </div>
+                                <div class="graph-label">Positive</div>
+                            </div>
+                        </div>
+                        <div class="graph-legend">
+                            <div class="legend-item">
+                                <div class="legend-color negative"></div>
+                                <span>COVID-19 Negative</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color positive"></div>
+                                <span>COVID-19 Positive</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="confidence-meter">
+                        <div class="confidence-level" id="confidence-level" style="width: 0%;"></div>
+                        <div class="confidence-labels">
+                            <span>0%</span>
+                            <span>50%</span>
+                            <span>100%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="result-description" id="result-description">
+                        <p>The AI model is analyzing your chest X-ray image for patterns associated with COVID-19 pneumonia.</p>
+                    </div>
+                    <div class="result-actions">
+                        <button id="new-analysis-btn" class="btn">New Analysis</button>
+                        <button id="save-result-btn" class="btn btn-primary">Save Result</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="main" id="about">
+        <div class="container">
+            <div class="section-title">
+                <h2>About COVID-19</h2>
+                <p>Essential information about prevention, symptoms, and what to do</p>
+            </div>
+            
+            <div class="features">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <img src="https://img.icons8.com/color/48/000000/coronavirus.png" alt="COVID Icon">
+                    </div>
+                    <h3>What is COVID-19?</h3>
+                    <p>COVID-19 is an infectious disease caused by the SARS-CoV-2 virus. It primarily spreads through respiratory droplets when an infected person coughs, sneezes, or talks.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <img src="https://img.icons8.com/color/48/000000/protection-mask.png" alt="Prevention Icon">
+                    </div>
+                    <h3>How to Avoid COVID-19</h3>
+                    <ul>
+                        <li>Get vaccinated and boosted</li>
+                        <li>Wear masks in crowded places</li>
+                        <li>Maintain social distancing</li>
+                        <li>Wash hands frequently</li>
+                        <li>Improve indoor ventilation</li>
+                        <li>Avoid touching face</li>
+                        <li>Clean high-touch surfaces</li>
+                    </ul>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <img src="https://img.icons8.com/color/48/000000/thermometer.png" alt="Symptoms Icon">
+                    </div>
+                    <h3>Common Symptoms</h3>
+                    <ul>
+                        <li>Fever or chills</li>
+                        <li>Cough</li>
+                        <li>Shortness of breath</li>
+                        <li>Fatigue</li>
+                        <li>Loss of taste or smell</li>
+                        <li>Sore throat</li>
+                        <li>Headache</li>
+                        <li>Muscle or body aches</li>
+                        <li>Congestion or runny nose</li>
+                        <li>Nausea or vomiting</li>
+                        <li>Diarrhea</li>
+                    </ul>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <img src="https://img.icons8.com/color/48/000000/hospital.png" alt="Treatment Icon">
+                    </div>
+                    <h3>If You Have COVID-19</h3>
+                    <ul>
+                        <li>Isolate for at least 5 days</li>
+                        <li>Monitor your symptoms</li>
+                        <li>Stay hydrated and rest</li>
+                        <li>Use over-the-counter medications</li>
+                        <li>Seek medical help if symptoms worsen</li>
+                        <li>Use separate bathroom if possible</li>
+                        <li>Wear mask around others</li>
+                    </ul>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <img src="https://img.icons8.com/color/48/000000/do-not-enter.png" alt="Avoid Icon">
+                    </div>
+                    <h3>What Not To Do</h3>
+                    <ul>
+                        <li>Don't ignore severe symptoms</li>
+                        <li>Don't take unproven treatments</li>
+                        <li>Don't break isolation early</li>
+                        <li>Don't share personal items</li>
+                        <li>Don't panic - most cases are mild</li>
+                        <li>Don't use public transport while sick</li>
+                        <li>Don't stop medications without consulting doctor</li>
+                    </ul>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <img src="https://img.icons8.com/color/48/000000/health-checkup.png" alt="Prevention Icon">
+                    </div>
+                    <h3>If You Don't Have COVID</h3>
+                    <ul>
+                        <li>Continue preventive measures</li>
+                        <li>Get tested if exposed</li>
+                        <li>Keep up with vaccinations</li>
+                        <li>Maintain a healthy lifestyle</li>
+                        <li>Have a plan if you get sick</li>
+                        <li>Stock essential supplies</li>
+                        <li>Know your local testing centers</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="result-container" style="margin-top: 3rem; text-align: left;">
+                <h3>Post-COVID Prevention</h3>
+                <div class="result-description">
+                    <p>After recovering from COVID-19, you should:</p>
+                    <ul style="margin-top: 1rem; padding-left: 20px;">
+                        <li>Gradually return to normal activities</li>
+                        <li>Watch for post-COVID conditions (fatigue, brain fog, etc.)</li>
+                        <li>Continue following public health guidelines</li>
+                        <li>Consider donating plasma if eligible</li>
+                        <li>Get medical follow-up if needed</li>
+                        <li>Practice breathing exercises if lung affected</li>
+                        <li>Monitor for blood clotting symptoms</li>
+                    </ul>
+                    <p style="margin-top: 1rem;"><strong>Remember:</strong> Even after recovery, you can get COVID-19 again. Continue taking precautions to protect yourself and others.</p>
+                </div>
+            </div>
+
+            <div class="resources-container">
+                <h3>Official Resources & Emergency Contacts</h3>
+                <div class="resource-links">
+                    <a href="https://www.mohfw.gov.in" target="_blank">
+                        <img src="https://img.icons8.com/color/48/000000/india.png" alt="MOHFW Icon">
+                        MOHFW Website
+                    </a>
+                    <a href="https://www.who.int/emergencies/diseases/novel-coronavirus-2019" target="_blank">
+                        <img src="https://img.icons8.com/color/48/000000/who.png" alt="WHO Icon">
+                        WHO COVID-19
+                    </a>
+                    <a href="tel:1075">
+                        <img src="https://img.icons8.com/color/48/000000/phone.png" alt="Phone Icon">
+                        MOHFW Helpline: 1075
+                    </a>
+                    <a href="tel:112">
+                        <img src="https://img.icons8.com/color/48/000000/emergency-call.png" alt="Emergency Icon">
+                        National Emergency: 112
+                    </a>
+                    <a href="tel:108">
+                        <img src="https://img.icons8.com/color/48/000000/ambulance.png" alt="Ambulance Icon">
+                        Medical Emergency: 108
+                    </a>
+                </div>
+                <div class="emergency-info">
+                    <h4>When to Seek Emergency Care:</h4>
+                    <ul>
+                        <li>Trouble breathing</li>
+                        <li>Persistent chest pain or pressure</li>
+                        <li>New confusion</li>
+                        <li>Inability to wake or stay awake</li>
+                        <li>Pale, gray, or blue-colored skin/lips</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="main" id="how-it-works">
+        <div class="container">
+            <div class="section-title">
+                <h2>How It Works</h2>
+                <p>Our COVID-19 detection system uses advanced deep learning algorithms to analyze chest X-ray images.</p>
+            </div>
+            
+            <div class="features">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <img src="https://img.icons8.com/color/48/000000/artificial-intelligence.png" alt="AI Icon">
+                    </div>
+                    <h3>Deep Learning Model</h3>
+                    <p>Our convolutional neural network (CNN) has been trained on thousands of chest X-ray images to recognize COVID-19 patterns.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <img src="https://img.icons8.com/color/48/000000/medical-doctor.png" alt="Medical Icon">
+                    </div>
+                    <h3>Medical Accuracy</h3>
+                    <p>The model achieves over 95% accuracy in distinguishing COVID-19 from other types of pneumonia and normal chest X-rays.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <img src="https://img.icons8.com/color/48/000000/clock--v1.png" alt="Fast Icon">
+                    </div>
+                    <h3>Fast Results</h3>
+                    <p>Get analysis results in seconds, helping with early detection and timely medical intervention.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer id="contact">
+        <div class="container">
+            <div class="section-title">
+                <h2>Contact Us</h2>
+                <p>Have questions or feedback? Feel free to reach out to us!</p>
+            </div>
+            
+            <div class="contact-form">
+                <form id="contactForm">
+                    <input type="text" id="name" name="name" placeholder="Name" required>
+                    <input type="email" id="email" name="email" placeholder="Email" required>
+                    <textarea id="message" name="message" placeholder="Message" required></textarea>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Send Message</button>
+                </form>
+            </div>
+            
+            <div class="copyright">
+                <p>&copy; 2023 COVID-19 X-Ray Detection. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Upload functionality
+            const uploadContainer = document.getElementById('upload-container');
+            const fileInput = document.getElementById('file-input');
+            const previewArea = document.getElementById('preview-area');
+            const previewImage = document.getElementById('preview-image');
+            const analyzeBtn = document.getElementById('analyze-btn');
+            const resultContainer = document.getElementById('result-container');
+            
+            // Click on upload container
+            uploadContainer.addEventListener('click', function() {
+                fileInput.click();
+            });
+            
+            // File input change
+            fileInput.addEventListener('change', function(e) {
+                if (e.target.files.length) {
+                    const file = e.target.files[0];
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(event) {
+                        previewImage.src = event.target.result;
+                        previewArea.style.display = 'block';
+                        uploadContainer.style.display = 'none';
+                    };
+                    
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            // Drag and drop functionality
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadContainer.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadContainer.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadContainer.addEventListener(eventName, unhighlight, false);
+            });
+            
+            function highlight() {
+                uploadContainer.classList.add('drag-over');
+            }
+            
+            function unhighlight() {
+                uploadContainer.classList.remove('drag-over');
+            }
+            
+            uploadContainer.addEventListener('drop', handleDrop, false);
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const file = dt.files[0];
+                
+                if (file.type.match('image.*')) {
+                    fileInput.files = dt.files;
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(event) {
+                        previewImage.src = event.target.result;
+                        previewArea.style.display = 'block';
+                        uploadContainer.style.display = 'none';
+                    };
+                    
+                    reader.readAsDataURL(file);
+                }
+            }
+            
+            // Analyze button click
+            analyzeBtn.addEventListener('click', function() {
+                // In a real application, this would send the image to a backend API
+                // For this demo, we'll simulate a response after a short delay
+                
+                analyzeBtn.disabled = true;
+                analyzeBtn.textContent = 'Analyzing...';
+                
+                setTimeout(function() {
+                    // Simulate API response
+                    const isPositive = Math.random() > 0.5;
+                    const positiveProbability = Math.floor(Math.random() * 30) + (isPositive ? 70 : 20);
+                    const negativeProbability = 100 - positiveProbability;
+                    
+                    // Update graph bars
+                    document.getElementById('positive-bar').style.height = positiveProbability + '%';
+                    document.getElementById('negative-bar').style.height = negativeProbability + '%';
+                    document.getElementById('positive-value').textContent = positiveProbability + '%';
+                    document.getElementById('negative-value').textContent = negativeProbability + '%';
+                    
+                    // Update confidence meter
+                    document.getElementById('confidence-level').style.width = positiveProbability + '%';
+                    
+                    const resultTitle = document.getElementById('result-title');
+                    const resultDescription = document.getElementById('result-description');
+                    
+                    if (isPositive) {
+                        resultContainer.className = 'result-container result-positive';
+                        resultTitle.textContent = 'COVID-19 Likely Detected';
+                        resultDescription.innerHTML = `
+                            <p>The AI model has detected patterns in the chest X-ray that are commonly associated with COVID-19 pneumonia with ${positiveProbability}% confidence. While this is not a definitive diagnosis, it suggests a high probability of COVID-19 infection.</p>
+                            <p>Please consult with a healthcare professional for confirmation and further testing. This result should be considered along with clinical symptoms and other diagnostic tests.</p>
+                            <p><strong>Recommendations:</strong></p>
+                            <ul>
+                                <li>Self-isolate immediately</li>
+                                <li>Monitor your symptoms closely</li>
+                                <li>Contact your healthcare provider</li>
+                                <li>Consider getting a PCR test for confirmation</li>
+                                <li>Inform recent close contacts</li>
+                            </ul>
+                        `;
+                    } else {
+                        resultContainer.className = 'result-container result-negative';
+                        resultTitle.textContent = 'No COVID-19 Detected';
+                        resultDescription.innerHTML = `
+                            <p>The AI model did not detect patterns typically associated with COVID-19 pneumonia in the chest X-ray (${negativeProbability}% confidence). However, this does not completely rule out COVID-19 infection, especially in early stages.</p>
+                            <p>Please consult with a healthcare professional if you have symptoms or concerns. Additional testing may be required for a definitive diagnosis.</p>
+                            <p><strong>Recommendations:</strong></p>
+                            <ul>
+                                <li>Continue monitoring for symptoms</li>
+                                <li>Follow local public health guidelines</li>
+                                <li>Consider other possible causes of symptoms</li>
+                                <li>Get tested if symptoms develop or exposure occurs</li>
+                            </ul>
+                        `;
+                    }
+                    
+                    previewArea.style.display = 'none';
+                    resultContainer.style.display = 'block';
+                    analyzeBtn.disabled = false;
+                    analyzeBtn.textContent = 'Analyze Image';
+                }, 2000);
+            });
+            
+            // New analysis button
+            document.getElementById('new-analysis-btn').addEventListener('click', function() {
+                resultContainer.style.display = 'none';
+                uploadContainer.style.display = 'block';
+                fileInput.value = '';
+                
+                // Reset graph bars
+                document.getElementById('positive-bar').style.height = '0%';
+                document.getElementById('negative-bar').style.height = '0%';
+                document.getElementById('positive-value').textContent = '0%';
+                document.getElementById('negative-value').textContent = '0%';
+                document.getElementById('confidence-level').style.width = '0%';
+            });
+            
+            // Save result button
+            document.getElementById('save-result-btn').addEventListener('click', function() {
+                alert('Result saved! (This would connect to a backend service in a real application)');
+            });
+
+            // Contact form submission
+            document.getElementById('contactForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                alert('Thank you for your message! We will get back to you soon.');
+                this.reset();
+            });
+
+            // Smooth scrolling for navigation links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>
